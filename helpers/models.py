@@ -7,7 +7,10 @@ from typing import Optional
 
 class RidgeRegression:
     def __init__(self, lamb: float = 0):
-        """Init method for Ridge Regression
+        """Init method for Ridge Regression.
+
+        See https://stats.stackexchange.com/questions/69205/how-to-derive-the-ridge-regression-solution for a
+        mathematical derivation of the Ridge Regression normal form.
 
         Args:
             lamb (float, optional): Regularization strength; must be a positive float. Defaults to 0.

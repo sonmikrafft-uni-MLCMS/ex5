@@ -1,7 +1,6 @@
 # module for model implemnetations
 
 import numpy as np
-
 from typing import Optional
 
 
@@ -79,7 +78,7 @@ class RBFRegression:
         self.w = None  # type: Optional[np.ndarray]
         self.d = None  # type: Optional[int]
 
-    def gaussian_rbf(self, x_l: np.array, x: np.array) -> float:
+    def gaussian_rbf(self, x_l: np.ndarray, x: np.ndarray) -> float:
         """Calculate the gaussian radial function for given vector pair
 
         Args:

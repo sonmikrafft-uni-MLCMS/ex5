@@ -3,8 +3,36 @@
 import numpy as np
 from typing import Optional
 
+from sklearn.base import BaseEstimator, RegressorMixin
+from sklearn.model_selection import RandomizedSearchCV
 
-class RidgeRegression:
+
+def get_best_model(
+    param_grid: dict, model: BaseEstimator, X: np.ndarray, Y: np.ndarray, n_iter: int = 40, cv: int = 5
+) -> BaseEstimator:
+    """Tries to find the best model for the given parameters by using a randomized search with cross-validation.
+
+    Args:
+        param_grid (dict): dictionary with the parameters to try
+        model (BaseEstimator): model to use
+        X (np.ndarray): input data
+        Y (np.ndarray): output data
+        n_iter (int, optional): number of iterations for the randomized search. Defaults to 40.
+        cv (int, optional): number of cross-validation folds. Defaults to 5.
+
+    Returns:
+        BaseEstimator: best model found
+    """
+    clf = RandomizedSearchCV(model, param_grid, n_iter=n_iter, cv=cv, n_jobs=-1, refit=True, verbose=1)
+    clf.fit(X, Y)
+
+    print(f"Best R2 score:\n{clf.best_score_}")
+    print(f"Best params:\n{clf.best_params_}")
+
+    return clf.best_estimator_
+
+
+class RidgeRegression(BaseEstimator, RegressorMixin):
     def __init__(self, lamb: float = 0):
         """Init method for Ridge Regression.
 
@@ -48,7 +76,7 @@ class RidgeRegression:
         # see normal form for ridge regression
         self.W = np.linalg.lstsq(X.T.dot(X) + self.lamb * np.identity(D), X.T.dot(Y), rcond=None)[0]
 
-    def transform(self, X: np.ndarray) -> np.ndarray:
+    def predict(self, X: np.ndarray) -> np.ndarray:
         """Calculate new prediction based on the trained model
 
         Args:
@@ -62,22 +90,9 @@ class RidgeRegression:
             X = X.reshape(-1, 1)  # add feature dimension
         return X @ self.W
 
-    def fit_transform(self, X: np.ndarray, Y: np.ndarray) -> np.ndarray:
-        """Fit the model and calculate predictions
 
-        Args:
-            X (np.ndarray): Training data, of shape (n_samples, n_features)
-            y (np.ndarray): Training targets, of shape (n_samples, n_targets)
-
-        Returns:
-            np.ndarray: Predictions, of shape (n_samples, n_targets)
-        """
-        self.fit(X, Y)
-        return self.transform(X)
-
-
-class RBFRegression:
-    def __init__(self, eps, L, lamb: float = 0) -> None:
+class RBFRegression(BaseEstimator, RegressorMixin):
+    def __init__(self, eps: float = 0.1, L: int = 100, lamb: float = 0) -> None:
         """Init method for RBF Regression.
 
         First transforms the data (n_samples, n_features) into a design matrix Phi of dimension (n_samples, L),
@@ -96,10 +111,11 @@ class RBFRegression:
         https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.Rbf.html
 
         Args:
-            lamb (float, optional): Regularization strength; must be a positive float. Defaults to 0.
-            eps (float): bandwidth parameter (controls radius/flatness) of RBFs
-            L (int): number of basis functions
+            eps (float, optional): Bandwidth parameter. Defaults to 0.1.
+            L (int, optional): Number of RBFs. Defaults to 100.
+            lamb (float, optional): Regularization parameter. Defaults to 0.
         """
+        self.lamb = lamb
         self.eps = eps
         self.L = L
         self.interpolation_centers = None  # type: Optional[np.ndarray]
@@ -179,7 +195,7 @@ class RBFRegression:
         # find optimal w* for design matrix Phi
         self.linear_regression.fit(Phi, Y)
 
-    def transform(self, X: np.ndarray) -> np.ndarray:
+    def predict(self, X: np.ndarray) -> np.ndarray:
         """Calculate new prediction based on the trained model.
 
         Args:
@@ -193,17 +209,4 @@ class RBFRegression:
             X = X.reshape(-1, 1)
 
         Phi = self.calculate_design_matrix(X, self.interpolation_centers, self.eps)
-        return self.linear_regression.transform(Phi)
-
-    def fit_transform(self, X: np.ndarray, Y: np.ndarray) -> np.ndarray:
-        """Fit the model and calculate predictions.
-
-        Args:
-            X (np.ndarray): Training data, of shape (n_samples, n_features)
-            y (np.ndarray): Training targets, of shape (n_samples, n_targets)
-
-        Returns:
-            np.ndarray: Predictions, of shape (n_samples, n_targets)
-        """
-        self.fit(X, Y)
-        return self.transform(X)
+        return self.linear_regression.predict(Phi)

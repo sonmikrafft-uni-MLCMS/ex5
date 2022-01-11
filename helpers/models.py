@@ -65,7 +65,7 @@ class RidgeRegression:
 
 class RBFRegression:
     def __init__(self, eps, L, lamb: float = 0):
-        """Init method for Radial Basis Function 
+        """Init method for Radial Basis Function
 
         Args:
             lamb (float, optional): Regularization strength; must be a positive float. Defaults to 0.
@@ -74,55 +74,54 @@ class RBFRegression:
         """
 
         self.eps = eps
-        self.L = L 
+        self.L = L
         self.lamb = lamb
         self.w = None  # type: Optional[np.ndarray]
         self.d = None  # type: Optional[int]
-    
 
     def gaussian_rbf(self, x_l: np.array, x: np.array) -> float:
         """Calculate the gaussian radial function for given vector pair
 
         Args:
-            x_l (np.array): center vector Dx1 
+            x_l (np.array): center vector Dx1
             x (np.array): data vector Dx1
             eps (float): bandwidth parameter (controls radius/flatness) 1x1
 
         Returns:
-            [float]: radial basis function value 
+            [float]: radial basis function value
         """
-        return np.exp(-np.linalg.norm(x_l-x)**2/(self.eps**2))
+        return np.exp(-np.linalg.norm(x_l - x) ** 2 / (self.eps ** 2))
 
     def sample_interpolation_center(self, X: np.ndarray):
-        """randomly sample L number of dataset points 
+        """randomly sample L number of dataset points
 
         Args:
-            X (np.ndarray): dataset 
+            X (np.ndarray): dataset
 
         Returns:
-            [np.ndarray]: matrix with L Number of dataset point pairs 
+            [np.ndarray]: matrix with L Number of dataset point pairs
         """
         random_interpolation_centers = np.random.choice(X[:, 0], size=self.L)
-        return random_interpolation_centers 
+        return random_interpolation_centers
 
     def calculate_design_matrix(self, X: np.ndarray, interpolation_centers: np.ndarray):
-        """ Fill the designmatrix by applying rbf function on X at centers 
+        """Fill the designmatrix by applying rbf function on X at centers
 
         Args:
             X (np.ndarray): dataset add shapes !!!!
             interpolation_centers (np.ndarray): sampled approximation points (num=L)
 
         Returns:
-            Phi (np.ndarray): Design matrix Phi 
+            Phi (np.ndarray): Design matrix Phi
         """
         shape = (X.shape[0], self.L)
         Phi = np.zeros(shape)  # NxL
-    
+
         for idx_centers, center in enumerate(interpolation_centers):
             Phi[:, idx_centers] = self.gaussian_rbf(center, X)
-        
+
         print(Phi.shape)
-        return Phi 
+        return Phi
 
     def fit(self, X: np.ndarray, y: np.ndarray):
         """Fit the model to the data
@@ -136,14 +135,14 @@ class RBFRegression:
         if X.ndim == 1:
             X = X.reshape(-1, 1)  # add feature dimension
         self.d = X.shape[1]
-        
-        # sample center points to fit gaussian 
+
+        # sample center points to fit gaussian
         interpolation_centers = self.sample_interpolation_center(X)
 
-        #fill design matrix 
+        # fill design matrix
         Phi = self.calculate_design_matrix(X, interpolation_centers)
 
-        # find optimal w* for design matrix Phi 
+        # find optimal w* for design matrix Phi
         self.w = np.linalg.lstsq(Phi.T.dot(Phi) + self.lamb * np.identity(self.d), Phi.T.dot(y), rcond=None)[0]
 
     def transform(self, Phi: np.ndarray) -> np.ndarray:

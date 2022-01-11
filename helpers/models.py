@@ -74,24 +74,23 @@ class RBFRegression:
 
         self.eps = eps
         self.L = L
-        self.lamb = lamb
-        self.w = None  # type: Optional[np.ndarray]
-        self.d = None  # type: Optional[int]
+        self.interpolation_centers = None  # type: Optional[np.ndarray]
+        self.linear_regression = RidgeRegression(lamb)
 
     def gaussian_rbf(self, x_l: np.ndarray, x: np.ndarray) -> float:
         """Calculate the gaussian radial function for given vector pair
 
         Args:
-            x_l (np.array): center vector Dx1
-            x (np.array): data vector Dx1
-            eps (float): bandwidth parameter (controls radius/flatness) 1x1
+            x_l (np.array): center vector of shape (D,)
+            x (np.array): data vector of shape (D,)
+            eps (float): bandwidth parameter (controls radius/flatness) sclara
 
         Returns:
-            [float]: radial basis function value
+            [float]: radial basis function value, shape (1,)
         """
-        return np.exp(-np.linalg.norm(x_l - x) ** 2 / (self.eps ** 2))
+        return np.exp(-np.linalg.norm(x_l - x, axis=-1) ** 2 / (self.eps ** 2))
 
-    def sample_interpolation_center(self, X: np.ndarray):
+    def sample_interpolation_center(self, X: np.ndarray) -> np.ndarray:
         """randomly sample L number of dataset points
 
         Args:
@@ -119,7 +118,6 @@ class RBFRegression:
         for idx_centers, center in enumerate(interpolation_centers):
             Phi[:, idx_centers] = self.gaussian_rbf(center, X)
 
-        print(Phi.shape)
         return Phi
 
     def fit(self, X: np.ndarray, y: np.ndarray):
@@ -136,29 +134,31 @@ class RBFRegression:
         self.d = X.shape[1]
 
         # sample center points to fit gaussian
-        interpolation_centers = self.sample_interpolation_center(X)
+        self.interpolation_centers = self.sample_interpolation_center(X)
 
         # fill design matrix
-        Phi = self.calculate_design_matrix(X, interpolation_centers)
+        Phi = self.calculate_design_matrix(X, self.interpolation_centers)
 
         # find optimal w* for design matrix Phi
-        self.w = np.linalg.lstsq(Phi.T.dot(Phi) + self.lamb * np.identity(self.d), Phi.T.dot(y), rcond=None)[0]
+        self.linear_regression.fit(Phi, y)
 
-    def transform(self, Phi: np.ndarray) -> np.ndarray:
+    def transform(self, X: np.ndarray) -> np.ndarray:
         """Calculate new prediction based on the trained model
 
         Args:
-            Phi (np.ndarray): Data to predict on, of shape (n_samples, n_features)
+            X (np.ndarray): Data to predict on, of shape (n_samples, n_features)
 
         Returns:
             np.ndarray: Predictions, of shape (n_samples,)
         """
-        assert self.w is not None, "Model not trained yet"
-        if Phi.ndim == 1:
-            Phi = Phi.reshape(-1, 1)  # add feature dimension
-        return Phi @ self.w
+        assert self.interpolation_centers is not None, "Model not trained yet"
+        if X.ndim == 1:
+            X = X.reshape(-1, 1)
 
-    def fit_transform(self, Phi: np.ndarray, y: np.ndarray) -> np.ndarray:
+        Phi = self.calculate_design_matrix(X, self.interpolation_centers)
+        return self.linear_regression.transform(Phi)
+
+    def fit_transform(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
         """Fit the model and calculate predictions
 
         Args:
@@ -168,5 +168,5 @@ class RBFRegression:
         Returns:
             np.ndarray: Predictions, of shape (n_samples,)
         """
-        self.fit(Phi, y)
-        return self.transform(Phi)
+        self.fit(X, y)
+        return self.transform(X)

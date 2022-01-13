@@ -85,3 +85,25 @@ def integrate_over_periodic_velocity(velocities: np.ndarray, timesteps_to_integr
         integrated_velocities[i] = current_integral
 
     return integrated_velocities
+
+
+def reset_to_0_every_n(X: np.ndarray, n: int) -> np.ndarray:
+    """After every n-th element, set the value to 0 and continue from there
+
+    Example:
+    >>> reset_to_0_every_n(np.arange(10), 3)
+    array([0, 1, 2, 0, 1, 2, 0, 1, 2, 0])
+
+    Args:
+        X (np.ndarray): Array to reset
+        n (int): Reset after every n-th element
+
+    Returns:
+        np.ndarray: Array with values reset to 0 after every n-th element
+    """
+    i = 0
+    X_return = np.zeros_like(X)
+    while (i * n) < X.shape[0]:
+        X_return[n * i :] = X[n * i :] - X[n * i]
+        i += 1
+    return X_return

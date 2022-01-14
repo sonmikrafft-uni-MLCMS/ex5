@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from scipy.integrate import odeint
+from Exercise5.helpers.models import RBFRegression
 
 
 def compute_finite_difference(x_0: pd.DataFrame, x_1: pd.DataFrame, delta_t: float = 0.1) -> pd.DataFrame:
@@ -38,7 +39,7 @@ def compute_closed_form_linear(x: pd.DataFrame, f: pd.DataFrame) -> pd.DataFrame
 
     return result
 
-def deriv(x: np.ndarray, t: np.ndarray, A_T: np.ndarray, dim1: int, dim2: int) -> np.ndarray:
+def deriv_linear(x: np.ndarray, t: np.ndarray, A_T: np.ndarray, dim1: int, dim2: int) -> np.ndarray:
     """
     Args:
         x (np.ndarray): input of shape (N,D)
@@ -54,7 +55,7 @@ def deriv(x: np.ndarray, t: np.ndarray, A_T: np.ndarray, dim1: int, dim2: int) -
     x_dot = x @ A_T
     return x_dot.reshape(-1)
 
-def solve_ode(t: np.array, A_T: np.ndarray, x: pd.DataFrame) -> pd.DataFrame:
+def solve_ode_linear(t: np.array, A_T: np.ndarray, x: pd.DataFrame) -> pd.DataFrame:
     """
     Args:
         A (pd.DataFrame): matrix of shape (D,D)
@@ -66,7 +67,38 @@ def solve_ode(t: np.array, A_T: np.ndarray, x: pd.DataFrame) -> pd.DataFrame:
     dim1 = x.shape[0]
     dim2 = x.shape[1]
     initial = x.to_numpy().reshape(-1)
-    sol = odeint(deriv, initial, t, args=(A_T, dim1, dim2))
+    sol = odeint(deriv_linear, initial, t, args=(A_T, dim1, dim2))
+    return sol
+
+def deriv_nonlinear(x: np.ndarray, t: np.ndarray, rbf: RBFRegression, dim1: int, dim2: int) -> np.ndarray:
+    """
+    Args:
+        x (np.ndarray): input of shape (N,D)
+        t (np.ndarray): time interval
+        A (np.ndarray): matrix of shape (D,D)
+        dim1 (int): N
+        dim2 (int): D
+
+    Returns: x_dot of shape (N,D), x_dot = Ax
+
+    """
+    x = x.reshape(dim1, dim2)
+    x_dot = rbf.predict(x)
+    return x_dot.reshape(-1)
+
+def solve_ode_nonlinear(t: np.array, rbf: RBFRegression, x: pd.DataFrame) -> pd.DataFrame:
+    """
+    Args:
+        A (pd.DataFrame): matrix of shape (D,D)
+        x (pd.DataFrame): input of shape (N,D)
+
+    Returns: solution to differential equation x_dot = Ax for a given input x and matrix A
+
+    """
+    dim1 = x.shape[0]
+    dim2 = x.shape[1]
+    initial = x.to_numpy().reshape(-1)
+    sol = odeint(deriv_nonlinear, initial, t, args=(rbf, dim1, dim2))
     return sol
 
 

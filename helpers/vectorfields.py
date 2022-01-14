@@ -19,7 +19,7 @@ def compute_finite_difference(x_0: pd.DataFrame, x_1: pd.DataFrame, delta_t: flo
     return v_k
 
 
-def compute_closed_form_linear_supervised_learning(x: pd.DataFrame, f: pd.DataFrame) -> pd.DataFrame:
+def compute_closed_form_linear(x: pd.DataFrame, f: pd.DataFrame) -> pd.DataFrame:
     """
     computes closed form solution A.T for linear functions that minimizes the least-squares error
     Args:
@@ -54,7 +54,7 @@ def deriv(x: np.ndarray, t: np.ndarray, A_T: np.ndarray, dim1: int, dim2: int) -
     x_dot = x @ A_T
     return x_dot.reshape(-1)
 
-def solve_ode(t: np.array, A_T: pd.DataFrame, x: pd.DataFrame) -> pd.DataFrame:
+def solve_ode(t: np.array, A_T: np.ndarray, x: pd.DataFrame) -> pd.DataFrame:
     """
     Args:
         A (pd.DataFrame): matrix of shape (D,D)
@@ -66,7 +66,7 @@ def solve_ode(t: np.array, A_T: pd.DataFrame, x: pd.DataFrame) -> pd.DataFrame:
     dim1 = x.shape[0]
     dim2 = x.shape[1]
     initial = x.to_numpy().reshape(-1)
-    sol = odeint(deriv, initial, t, args=(A_T.to_numpy(), dim1, dim2))
+    sol = odeint(deriv, initial, t, args=(A_T, dim1, dim2))
     return sol
 
 

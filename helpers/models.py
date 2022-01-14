@@ -2,9 +2,11 @@
 
 import numpy as np
 from typing import Optional
+from pprint import pprint
 
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.model_selection import RandomizedSearchCV
+from sklearn.metrics import mean_absolute_error, mean_absolute_percentage_error, mean_squared_error, r2_score
 
 
 def get_best_model(
@@ -23,11 +25,25 @@ def get_best_model(
     Returns:
         BaseEstimator: best model found
     """
-    clf = RandomizedSearchCV(model, param_grid, n_iter=n_iter, cv=cv, n_jobs=-1, refit=True, verbose=1)
+    metric = "r2"
+
+    clf = RandomizedSearchCV(
+        model,
+        param_grid,
+        n_iter=n_iter,
+        cv=cv,
+        n_jobs=-1,
+        refit=metric,
+        verbose=1,
+        scoring=lambda estimator, x_val, y_val: get_regression_scores_dict(y_val, estimator.predict(x_val)),
+    )
     clf.fit(X, Y)
 
-    print(f"Best R2 score:\n{clf.best_score_}")
+    best_estimator = clf.best_estimator_
+    print(f"Best param setting achieved {metric} score during cval:\n{clf.best_score_}")
     print(f"Best params:\n{clf.best_params_}")
+    print(f"Scores of best estimator refitted on full data:")
+    pprint(get_regression_scores_dict(Y, best_estimator.predict(X)))
 
     return clf.best_estimator_
 
@@ -210,3 +226,22 @@ class RBFRegression(BaseEstimator, RegressorMixin):
 
         Phi = self.calculate_design_matrix(X, self.interpolation_centers, self.eps)
         return self.linear_regression.predict(Phi)
+
+
+def get_regression_scores_dict(y_true: np.ndarray, y_pred: np.ndarray) -> dict:
+    """Returns a dictionary of scores for regression.
+
+    Args:
+        y_true (np.ndarray): True values. Shape: (n_samples,).
+        y_pred (np.ndarray): Predicted values. Shape: (n_samples,).
+
+    Returns:
+        Dict: Dictionary of scores where keys are the names of the scores and values are the scores.
+    """
+    scores = {}
+    scores["mae"] = mean_absolute_error(y_true, y_pred)
+    scores["mape"] = mean_absolute_percentage_error(y_true, y_pred)
+    scores["mse"] = mean_squared_error(y_true, y_pred)
+    scores["rmse"] = np.sqrt(scores["mse"])
+    scores["r2"] = r2_score(y_true, y_pred)
+    return scores

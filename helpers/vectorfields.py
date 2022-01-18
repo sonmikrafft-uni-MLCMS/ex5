@@ -91,8 +91,7 @@ def solve_ode_nonlinear(t: np.array, model: RBFRegression, x: pd.DataFrame) -> n
     Returns: solution to differential equation x_dot = Ax for a given input x and matrix A
 
     """
-    initial = x.to_numpy().reshape(-1)
-    sol = odeint(deriv_nonlinear, initial, t, args=(model,))
+    sol = odeint(deriv_nonlinear, x.to_numpy(), t, args=(model,))
     return sol
 
 

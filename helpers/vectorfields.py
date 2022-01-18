@@ -70,7 +70,7 @@ def solve_ode_linear(t: np.array, A_T: np.ndarray, x: pd.DataFrame) -> pd.DataFr
     sol = odeint(deriv_linear, initial, t, args=(A_T, dim1, dim2))
     return sol
 
-def deriv_nonlinear(x: np.ndarray, t: np.ndarray, rbf: RBFRegression, dim1: int) -> np.ndarray:
+def deriv_nonlinear(x: np.ndarray, t: np.ndarray, model: RBFRegression, dim1: int) -> np.ndarray:
     """
     Args:
         x (np.ndarray): input of shape (N,1)
@@ -81,9 +81,9 @@ def deriv_nonlinear(x: np.ndarray, t: np.ndarray, rbf: RBFRegression, dim1: int)
     Returns: x_dot of shape (N,D), x_dot = Ax
 
     """
-    return rbf.predict(x)
+    return model.predict(x)
 
-def solve_ode_nonlinear(t: np.array, rbf: RBFRegression, x: pd.DataFrame) -> np.ndarray:
+def solve_ode_nonlinear(t: np.array, model: RBFRegression, x: pd.DataFrame) -> np.ndarray:
     """
     Args:
         rbf (RBFRegression): instance of RBFRefression
@@ -93,7 +93,7 @@ def solve_ode_nonlinear(t: np.array, rbf: RBFRegression, x: pd.DataFrame) -> np.
 
     """
     initial = x.to_numpy().reshape(-1)
-    sol = odeint(deriv_nonlinear, initial, t, args=(rbf, 1))
+    sol = odeint(deriv_nonlinear, initial, t, args=(model, 1))
     return sol
 
 

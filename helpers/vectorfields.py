@@ -70,35 +70,30 @@ def solve_ode_linear(t: np.array, A_T: np.ndarray, x: pd.DataFrame) -> pd.DataFr
     sol = odeint(deriv_linear, initial, t, args=(A_T, dim1, dim2))
     return sol
 
-def deriv_nonlinear(x: np.ndarray, t: np.ndarray, rbf: RBFRegression, dim1: int, dim2: int) -> np.ndarray:
+def deriv_nonlinear(x: np.ndarray, t: np.ndarray, rbf: RBFRegression, dim1: int) -> np.ndarray:
     """
     Args:
-        x (np.ndarray): input of shape (N,D)
+        x (np.ndarray): input of shape (N,1)
         t (np.ndarray): time interval
-        A (np.ndarray): matrix of shape (D,D)
+        rbf (RBFRegression): instance of RBFRefression
         dim1 (int): N
-        dim2 (int): D
 
     Returns: x_dot of shape (N,D), x_dot = Ax
 
     """
-    x = x.reshape(dim1, dim2)
-    x_dot = rbf.predict(x)
-    return x_dot.reshape(-1)
+    return rbf.predict(x)
 
-def solve_ode_nonlinear(t: np.array, rbf: RBFRegression, x: pd.DataFrame) -> pd.DataFrame:
+def solve_ode_nonlinear(t: np.array, rbf: RBFRegression, x: pd.DataFrame) -> np.ndarray:
     """
     Args:
-        A (pd.DataFrame): matrix of shape (D,D)
-        x (pd.DataFrame): input of shape (N,D)
+        rbf (RBFRegression): instance of RBFRefression
+        x (pd.DataFrame): input of shape (N,1)
 
     Returns: solution to differential equation x_dot = Ax for a given input x and matrix A
 
     """
-    dim1 = x.shape[0]
-    dim2 = x.shape[1]
     initial = x.to_numpy().reshape(-1)
-    sol = odeint(deriv_nonlinear, initial, t, args=(rbf, dim1, dim2))
+    sol = odeint(deriv_nonlinear, initial, t, args=(rbf, 1))
     return sol
 
 

@@ -75,7 +75,7 @@ def deriv_nonlinear(x: np.ndarray, t: np.ndarray, model: RBFRegression) -> np.nd
     Args:
         x (np.ndarray): input of shape (N,1)
         t (np.ndarray): time interval
-        rbf (RBFRegression): instance of RBFRegression
+        model (RBFRegression): instance of RBFRegression
 
     Returns: x_dot of shape (N,D), x_dot = Ax
 
@@ -85,7 +85,7 @@ def deriv_nonlinear(x: np.ndarray, t: np.ndarray, model: RBFRegression) -> np.nd
 def solve_ode_nonlinear(t: np.array, model: RBFRegression, x: pd.DataFrame) -> np.ndarray:
     """
     Args:
-        rbf (RBFRegression): instance of RBFRegression
+        model (RBFRegression): instance of RBFRegression
         x (pd.DataFrame): input of shape (N,1)
 
     Returns: solution to differential equation x_dot = Ax for a given input x and matrix A

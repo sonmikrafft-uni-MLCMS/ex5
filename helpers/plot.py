@@ -38,7 +38,7 @@ def plot_pandas_dataset(
     x: Optional[str] = None,
     y: Optional[str] = None,
     ax: plt.Axes = None,
-    legend_loc: str = "auto",
+    legend_loc: str = "best",
     **kwargs,
 ) -> plt.Axes:
     """Plot a dataset using seaborn.
@@ -51,7 +51,7 @@ def plot_pandas_dataset(
         x (Optional[str], optional): Column to plot on the x-axis. Defaults to None.
         y (Optional[str], optional): Column to plot on the y-axis. Defaults to None.
         ax (plt.Axes, optional): Axes to plot on. Defaults to None.
-        legend_loc (str, optional): Where to place the legend. Defaults to "auto".
+        legend_loc (str, optional): Where to place the legend. Defaults to "best".
         kwargs (dict, optional): Arguments passed to sns.lineplot. Defaults to {}.
 
     Returns:
